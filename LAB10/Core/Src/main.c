@@ -51,6 +51,7 @@ TIM_HandleTypeDef htim11;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+
 uint16_t ADCin = 0;
 uint64_t _micro = 0;
 
@@ -58,6 +59,28 @@ uint64_t _micro = 0;
 uint16_t dataOut = 0;
 //config 4 bit
 uint8_t DACConfig = 0b0011;
+
+
+//uart
+char TxDataBuffer[32] = {0};
+
+char RxDataBuffer[32] = {0};
+
+int16_t inputchar2=0;
+
+uint64_t period = 0;
+uint8_t freq_saw = 0;
+uint8_t freq_sine = 0;
+uint8_t freq_sqr = 0;
+
+
+
+uint8_t  Vmax = 33;
+uint8_t  Vmin = 0;
+uint16_t ADCmax = 4096;
+uint16_t ADCmin = 0;
+
+////////////////////////////////
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -72,6 +95,11 @@ static void MX_TIM11_Init(void);
 /* USER CODE BEGIN PFP */
 void MCP4922SetOutput(uint8_t Config, uint16_t DACOutput);
 uint64_t micros();
+
+//UART
+int16_t UARTRecieveIT();
+
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -121,6 +149,13 @@ int main(void)
   //  HAL_ADC_Start_IT(&hadc1);
 
   HAL_GPIO_WritePin(LOAD_GPIO_Port, LOAD_Pin, GPIO_PIN_RESET);
+
+
+  //UART
+  {
+ 	  char temp[] = "HELLO WORLD\r\n please type something to test UART\r\n";
+ 	  HAL_UART_Transmit_IT(&huart2,(uint8_t*) temp, strlen(temp));
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -130,6 +165,29 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  HAL_UART_Receive_IT(&huart2, (uint8_t*)RxDataBuffer, 32);
+
+	  int16_t inputchar = UARTRecieveIT();
+
+	  if(inputchar!=-1)
+	  {
+		sprintf(TxDataBuffer, "ReceivedChar:[%c]\r\n", inputchar);
+		HAL_UART_Transmit(&huart2, (uint8_t*)TxDataBuffer, strlen(TxDataBuffer),50);
+	  }
+
+	  if(inputchar == 'a')
+	  {
+		  char temp[] = "Uuuuuuuuuu\r\n";
+		  HAL_UART_Transmit_IT(&huart2,(uint8_t*) temp, strlen(temp));
+	  }
+
+
+
+
+
+
+
+
 	  static uint64_t timestamp = 0;
 
 	  if (micros() - timestamp >= 1000)
@@ -492,6 +550,21 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 	}
 }
 
+
+//////////////////////////////////
+
+
+int16_t UARTRecieveIT()
+{
+	static uint32_t dataPos =0;
+	int16_t data=-1;
+	if(huart2.RxXferSize - huart2.RxXferCount!=dataPos)
+	{
+		data=RxDataBuffer[dataPos];
+		dataPos= (dataPos+1)%huart2.RxXferSize;
+	}
+	return data;
+}
 /* USER CODE END 4 */
 
 /**
