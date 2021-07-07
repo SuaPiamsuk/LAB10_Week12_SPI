@@ -68,19 +68,32 @@ char RxDataBuffer[32] = {0};
 
 int16_t inputchar2=0;
 
-uint64_t period = 0;
-uint8_t freq_saw = 0;
-uint8_t freq_sine = 0;
-uint8_t freq_sqr = 0;
+uint64_t period   = 0;
+uint8_t freq_saw  = 10;
+uint8_t freq_sine = 10;
+uint8_t freq_sqr  = 10;
 
 
 
-uint8_t  Vmax = 33;
-uint8_t  Vmin = 0;
+uint8_t  Vmax   = 33;
+uint8_t  Vmin   = 0;
 uint16_t ADCmax = 4096;
 uint16_t ADCmin = 0;
 
 ////////////////////////////////
+
+typedef enum
+{
+	Main_Menu_Print,
+	Main_Menu_Select,
+	Menu_1_Print,
+	Menu_1_Select,
+	Menu_2_Print,
+	Menu_2_Select,
+	Menu_3_Print,
+	Menu_3_Select,
+
+}State_machine;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -152,10 +165,10 @@ int main(void)
 
 
   //UART
-  {
- 	  char temp[] = "HELLO WORLD\r\n please type something to test UART\r\n";
- 	  HAL_UART_Transmit_IT(&huart2,(uint8_t*) temp, strlen(temp));
-  }
+//  {
+// 	  char temp[] = "HELLO WORLD\r\n please type something to test UART\r\n";
+// 	  HAL_UART_Transmit_IT(&huart2,(uint8_t*) temp, strlen(temp));
+//  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -165,43 +178,111 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+
 	  HAL_UART_Receive_IT(&huart2, (uint8_t*)RxDataBuffer, 32);
 
 	  int16_t inputchar = UARTRecieveIT();
 
-	  if(inputchar!=-1)
+	  static State_machine state = Main_Menu_Print;
+
+	  switch(state)
 	  {
-		sprintf(TxDataBuffer, "ReceivedChar:[%c]\r\n", inputchar);
-		HAL_UART_Transmit(&huart2, (uint8_t*)TxDataBuffer, strlen(TxDataBuffer),50);
-	  }
+	  	  case Main_Menu_Print:
+	  		sprintf(TxDataBuffer, "\n--------------------------\n\r");
+			HAL_UART_Transmit(&huart2, (uint8_t*)TxDataBuffer, strlen(TxDataBuffer), 50);
+			sprintf(TxDataBuffer, "  Choose Waveform\n\r");
+			HAL_UART_Transmit(&huart2, (uint8_t*)TxDataBuffer, strlen(TxDataBuffer), 50);
+			sprintf(TxDataBuffer, "--------------------------\n\r");
+			HAL_UART_Transmit(&huart2, (uint8_t*)TxDataBuffer, strlen(TxDataBuffer), 50);
+			sprintf(TxDataBuffer, "[1] Sawtooth\n\r");
+			HAL_UART_Transmit(&huart2, (uint8_t*)TxDataBuffer, strlen(TxDataBuffer), 50);
+			sprintf(TxDataBuffer, "[2] Sine Wave\n\r");
+			HAL_UART_Transmit(&huart2, (uint8_t*)TxDataBuffer, strlen(TxDataBuffer), 50);
+			sprintf(TxDataBuffer, "[3] Square Wave\n\n\r");
+			HAL_UART_Transmit(&huart2, (uint8_t*)TxDataBuffer, strlen(TxDataBuffer), 50);
+			state = Main_Menu_Select;
+			break;
 
-	  if(inputchar == 'a')
-	  {
-		  char temp[] = "Uuuuuuuuuu\r\n";
-		  HAL_UART_Transmit_IT(&huart2,(uint8_t*) temp, strlen(temp));
-	  }
+	  	  case Main_Menu_Select:
 
-
-
-
-
-
-
-
-	  static uint64_t timestamp = 0;
-
-	  if (micros() - timestamp >= 1000)
-	  {
-			timestamp = micros();
-//          saw tooth
-			dataOut = dataOut + 1;
-			dataOut %= 4096;
-
-			if (hspi3.State == HAL_SPI_STATE_READY && HAL_GPIO_ReadPin(SPI_SS_GPIO_Port, SPI_SS_Pin) == GPIO_PIN_SET)
-			{
-				MCP4922SetOutput(DACConfig, dataOut);
+	  		switch(inputchar)
+	  		{
+				case -1 :
+					break;
+				case '1':
+//					wave = 1;
+//					period = 1030000/(freqx10[1] * (ADCmax[1] - ADCmin[1]) / 10);
+//					State = Menu_1_Print;
+					break;
+				case '2':
+//					wave = 2;
+//					Amplitude 	= (ADCmax[2] - ADCmin[2]) / 2;
+//					Shift  		= (ADCmax[2] + ADCmin[2]) / 2;
+//					period 		= 1000000 / (freqx10[2]*628/10);
+//					State = Menu_2_Print;
+					break;
+				case '3':
+//					wave = 3;
+//					period = 1090000 / (freqx10[3]*100/10);
+//					State = Menu_3_Print;
+					break;
+				case 'x':
+//					sprintf(TxDataBuffer, "No More Back\n\r");
+//					HAL_UART_Transmit(&huart2, (uint8_t*)TxDataBuffer, strlen(TxDataBuffer), 100);
+//					State = Main_Menu_Print;
+					break;
+				default:
+					sprintf(TxDataBuffer, "\nOnly [1][2][3] Key Available\n\r");
+					HAL_UART_Transmit(&huart2, (uint8_t*)TxDataBuffer, strlen(TxDataBuffer), 100);
+					state = Main_Menu_Print;
+					break;
 			}
+			break;
+
+		default:
+			break;
+
+
+
 	  }
+//
+//	  if(inputchar!=-1)
+//	  {
+//		sprintf(TxDataBuffer, "ReceivedChar:[%c]\r\n", inputchar);
+//		HAL_UART_Transmit(&huart2, (uint8_t*)TxDataBuffer, strlen(TxDataBuffer),50);
+//	  }
+//
+//	  if(inputchar == 'a')
+//	  {
+//		  char temp[] = "Uuuuuuuuuu\r\n";
+//		  HAL_UART_Transmit_IT(&huart2,(uint8_t*) temp, strlen(temp));
+//	  }
+
+
+
+
+
+
+//
+//
+//	  static uint64_t timestamp = 0;
+//
+//	  if (micros() - timestamp >= 1000)
+//	  {
+//			timestamp = micros();
+////          saw tooth
+//			dataOut = dataOut + 1;
+//			dataOut %= 4096;
+//
+//			if (hspi3.State == HAL_SPI_STATE_READY && HAL_GPIO_ReadPin(SPI_SS_GPIO_Port, SPI_SS_Pin) == GPIO_PIN_SET)
+//			{
+//				MCP4922SetOutput(DACConfig, dataOut);
+//			}
+//	  }
+
+
+
 
   }
   /* USER CODE END 3 */
