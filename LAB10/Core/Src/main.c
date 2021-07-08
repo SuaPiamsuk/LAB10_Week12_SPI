@@ -248,13 +248,9 @@ int main(void)
 					case '2':
 						Amplitude 	= (ADCmax_sin - ADCmin_sin)/2.0;
 						ref  		= (ADCmax_sin + ADCmin_sin)/2.0;
-//						period 		= 1000000 / (freq_sine*6.28);
-//						period = 100;
 						state = Menu_2_Print;
 						break;
 					case '3':
-	//					wave = 3;
-	//					period = 1090000 / (freqx10[3]*100/10);
 						state = Menu_3_Print;
 						break;
 					case 'x':
@@ -616,7 +612,7 @@ int main(void)
 
 								if(ON_time <= Dutycycle)
 								{
-									dataOut = ADCmax_sqr*0.09/0.09;
+									dataOut = ADCmax_sqr*0.9999;
 								}
 								else
 								{
@@ -628,9 +624,6 @@ int main(void)
 									MCP4922SetOutput(DACConfig, dataOut);
 								}
 							}
-
-
-
 							break;
 						case 'a' :
 							Vmax_sqr += 0.1;
